@@ -5,6 +5,8 @@ import com.project.demo.logic.entity.product.ProductRepository;
 import com.project.demo.logic.entity.category.Category;
 import com.project.demo.logic.entity.category.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,15 +20,27 @@ public class ProductRestController {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private CategoryRepository categoryRepository;
+
     @GetMapping
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public Product addProduct(@RequestBody Product product) {
-        return productRepository.save(product);
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
+    public ResponseEntity<Product> addProduct(@RequestBody Product product) {
+        Long categoryId = product.getCategory().getCategoryId();
+        Optional<Category> categoryOptional = categoryRepository.findById(categoryId);
+        if (categoryOptional.isPresent()) {
+            product.setCategory(categoryOptional.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+        Product savedProduct = productRepository.save(product);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedProduct);
+//        return productRepository.save(product);
     }
 
     @PutMapping("/{id}")
