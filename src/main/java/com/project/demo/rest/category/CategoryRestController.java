@@ -36,6 +36,7 @@ public class CategoryRestController {
         return categoryRepository.findById(id)
                 .map(existingCategory -> {
                     existingCategory.setName(category.getName());
+                    existingCategory.setDescription(category.getDescription());
                     return categoryRepository.save(existingCategory);
                 })
                 .orElseGet(() -> {
